@@ -1,0 +1,193 @@
+# @title  Simple Pose Detection
+
+# Install & Import
+
+!pip install ultralytics -q
+
+import cv2
+
+from ultralytics import YOLO
+
+from google.colab import files
+
+from google.colab.patches import cv2_imshow
+
+
+
+# Body parts dictionary
+
+BODY_PARTS = {
+
+  0: "Nose", 1: "L-Eye", 2: "R-Eye", 3: "L-Ear", 4: "R-Ear",
+
+  5: "L-Shoulder", 6: "R-Shoulder", 7: "L-Elbow", 8: "R-Elbow",
+
+  9: "L-Wrist", 10: "R-Wrist", 11: "L-Hip", 12: "R-Hip",
+
+  13: "L-Knee", 14: "R-Knee", 15: "L-Ankle", 16: "R-Ankle"
+
+}
+
+
+
+# Upload image
+
+print(" Upload an image:")
+
+uploaded = files.upload()
+
+image_path = list(uploaded.keys())[0]
+
+img = cv2.imread(image_path)
+
+
+
+# Load model & detect
+
+model = YOLO("yolov8n-pose.pt")
+
+results = model(img, conf=0.3)
+
+
+
+# Draw body parts with names
+
+if results[0].keypoints:
+
+  keypoints = results[0].keypoints.xy[0].cpu().numpy()
+
+  
+
+  print(f"\n Found {len(results[0].keypoints.xy)} person(s)")
+
+  print("\n Body Parts Detected:")
+
+  print("-" * 40)
+
+  
+
+  for idx, (x, y) in enumerate(keypoints):
+
+    x, y = int(x), int(y)
+
+    if x > 0 and y > 0:
+
+      # Draw circle
+
+      cv2.circle(img, (x, y), 8, (0, 255, 0), -1)
+
+      
+
+      # Add name
+
+      name = BODY_PARTS[idx]
+
+      cv2.putText(img, name, (x+10, y-5),
+
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+
+            (0, 0, 255), 2)
+
+      
+
+      # Print to console
+
+      print(f"{name:15} at ({x}, {y})")
+
+
+
+# Show result
+
+cv2_imshow(img)
+
+
+
+# Save & download
+
+cv2.imwrite('pose_result.jpg', img)
+
+print("\n Download result:")
+
+files.download('pose_result.jpg')
+
+
+
+# @title  Tiny Pose Detector
+
+!pip install ultralytics -q
+
+import cv2
+
+from ultralytics import YOLO
+
+from google.colab import files, patches
+
+
+
+# Upload & process
+
+files.upload()
+
+img = cv2.imread(list(files.upload().keys())[0])
+
+results = YOLO("yolov8n-pose.pt")(img)
+
+
+
+# Draw results
+
+for kpt in results[0].keypoints.xy[0]:
+
+  x, y = int(kpt[0]), int(kpt[1])
+
+  if x > 0 and y > 0:
+
+    cv2.circle(img, (x, y), 6, (0,255,0), -1)
+
+    cv2.putText(img, f"({x},{y})", (x+5, y-5),
+
+          cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,0,0), 1)
+
+
+
+patches.cv2_imshow(img)
+
+files.download('pose.jpg')
+
+
+
+# @title  One-Cell Pose Detection
+
+!pip install ultralytics -q
+
+import cv2
+
+from ultralytics import YOLO
+
+from google.colab import files, patches
+
+files.upload()
+
+img = cv2.imread(list(files.upload().keys())[0])
+
+result_img = YOLO("yolov8n-pose.pt")(img)[0].plot()
+
+patches.cv2_imshow(result_img)
+
+cv2.imwrite('pose.jpg', result_img)
+
+files.download('pose.jpg')
+
+
+
+from ultralytics import YOLO
+
+from google.colab import files
+
+files.upload()
+
+model = YOLO("yolov8n-pose.pt")
+
+results = model.predict(list(files.upload().keys())[0])
+
+results[0].show()
